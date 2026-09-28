@@ -39,3 +39,19 @@ pytest
 The GitHub Actions workflow runs these checks for every push and pull request.
 This project intentionally has no deployment step because it is intended to run
 locally.
+
+## Resetting local data
+
+Your todos are stored on disk in `data/todos.json`. Stopping Streamlit or
+closing the browser tab does not delete them — they reload the next time you
+start the app.
+
+To start over with an empty list, delete the data file while the app is
+stopped:
+
+```bash
+rm data/todos.json
+```
+
+The next time you run `streamlit run app.py`, the app starts from an empty list
+and recreates `data/todos.json` as soon as you add your first todo.
