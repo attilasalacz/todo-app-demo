@@ -4,7 +4,14 @@ from pathlib import Path
 
 import streamlit as st
 
-from todo_store import TodoStoreError, add_todo, delete_todo, load_todos, set_completed
+from todo_store import (
+    DuplicateTodoError,
+    TodoStoreError,
+    add_todo,
+    delete_todo,
+    load_todos,
+    set_completed,
+)
 
 DATA_FILE = Path("data/todos.json")
 
@@ -24,6 +31,8 @@ if submitted:
     try:
         add_todo(DATA_FILE, title)
         st.rerun()
+    except DuplicateTodoError:
+        st.warning(f"“{title.strip()}” is already on your list.")
     except ValueError:
         st.warning("Enter a todo before adding it.")
     except TodoStoreError as exc:

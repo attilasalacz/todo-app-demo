@@ -20,6 +20,10 @@ class TodoStoreError(RuntimeError):
     """Raised when todo data cannot be read or written."""
 
 
+class DuplicateTodoError(ValueError):
+    """Raised when a todo with the same title already exists."""
+
+
 def load_todos(path: Path) -> list[Todo]:
     """Load todos from *path*, returning an empty list when it does not exist."""
     if not path.exists():
@@ -42,13 +46,16 @@ def add_todo(path: Path, title: str) -> Todo:
     if not normalized_title:
         raise ValueError("Todo title cannot be empty.")
 
+    todos = load_todos(path)
+    if any(_title_key(todo["title"]) == _title_key(normalized_title) for todo in todos):
+        raise DuplicateTodoError(f"A todo titled {normalized_title!r} already exists.")
+
     todo: Todo = {
         "id": str(uuid4()),
         "title": normalized_title,
         "completed": False,
         "created_at": datetime.now(UTC).isoformat(),
     }
-    todos = load_todos(path)
     todos.append(todo)
     _save_todos(path, todos)
     return todo
@@ -73,6 +80,10 @@ def delete_todo(path: Path, todo_id: str) -> bool:
         return False
     _save_todos(path, remaining)
     return True
+
+
+def _title_key(title: str) -> str:
+    return title.strip().casefold()
 
 
 def _save_todos(path: Path, todos: list[Todo]) -> None:

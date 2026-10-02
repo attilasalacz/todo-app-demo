@@ -3,6 +3,7 @@ import json
 import pytest
 
 from todo_store import (
+    DuplicateTodoError,
     TodoStoreError,
     add_todo,
     delete_todo,
@@ -69,3 +70,33 @@ def test_load_todos_rejects_invalid_schema(tmp_path):
 
     with pytest.raises(TodoStoreError, match="invalid format"):
         load_todos(data_file)
+
+
+def test_add_todo_rejects_exact_duplicate_title(tmp_path):
+    data_file = tmp_path / "todos.json"
+    first = add_todo(data_file, "Buy milk")
+
+    with pytest.raises(DuplicateTodoError, match="already exists"):
+        add_todo(data_file, "Buy milk")
+
+    assert load_todos(data_file) == [first]
+
+
+def test_add_todo_rejects_duplicate_ignoring_case_and_whitespace(tmp_path):
+    data_file = tmp_path / "todos.json"
+    first = add_todo(data_file, "Buy milk")
+
+    with pytest.raises(DuplicateTodoError):
+        add_todo(data_file, "buy milk")
+    with pytest.raises(DuplicateTodoError):
+        add_todo(data_file, "  BUY MILK  ")
+
+    assert load_todos(data_file) == [first]
+
+
+def test_add_todo_allows_distinct_titles(tmp_path):
+    data_file = tmp_path / "todos.json"
+    add_todo(data_file, "Buy milk")
+    add_todo(data_file, "Buy bread")
+
+    assert [todo["title"] for todo in load_todos(data_file)] == ["Buy milk", "Buy bread"]
