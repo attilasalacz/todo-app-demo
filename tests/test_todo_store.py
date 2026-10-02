@@ -1,4 +1,5 @@
 import json
+from datetime import date
 
 import pytest
 
@@ -100,3 +101,54 @@ def test_add_todo_allows_distinct_titles(tmp_path):
     add_todo(data_file, "Buy bread")
 
     assert [todo["title"] for todo in load_todos(data_file)] == ["Buy milk", "Buy bread"]
+
+
+def test_add_todo_without_due_date_stores_null(tmp_path):
+    data_file = tmp_path / "todos.json"
+
+    created = add_todo(data_file, "No deadline")
+
+    assert created["due_date"] is None
+    assert json.loads(data_file.read_text(encoding="utf-8"))[0]["due_date"] is None
+
+
+def test_add_todo_with_due_date_persists_iso_string_and_reloads(tmp_path):
+    data_file = tmp_path / "todos.json"
+
+    created = add_todo(data_file, "File taxes", date(2026, 4, 15))
+
+    assert created["due_date"] == "2026-04-15"
+    assert json.loads(data_file.read_text(encoding="utf-8"))[0]["due_date"] == "2026-04-15"
+    assert load_todos(data_file) == [created]
+
+
+def test_load_todos_accepts_legacy_record_without_due_date(tmp_path):
+    data_file = tmp_path / "todos.json"
+    legacy = {
+        "id": "legacy-1",
+        "title": "Old todo",
+        "completed": False,
+        "created_at": "2025-01-01T00:00:00+00:00",
+    }
+    data_file.write_text(json.dumps([legacy]), encoding="utf-8")
+
+    todos = load_todos(data_file)
+
+    assert todos == [legacy]
+    assert todos[0].get("due_date") is None
+    assert set_completed(data_file, "legacy-1", True) is True
+
+
+def test_load_todos_rejects_invalid_due_date(tmp_path):
+    data_file = tmp_path / "todos.json"
+    record = {
+        "id": "bad",
+        "title": "Bad date",
+        "completed": False,
+        "created_at": "2025-01-01T00:00:00+00:00",
+        "due_date": "not-a-date",
+    }
+    data_file.write_text(json.dumps([record]), encoding="utf-8")
+
+    with pytest.raises(TodoStoreError, match="invalid format"):
+        load_todos(data_file)

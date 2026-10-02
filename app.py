@@ -25,11 +25,12 @@ with st.form("new_todo", clear_on_submit=True):
         placeholder="What needs to be done?",
         label_visibility="collapsed",
     )
+    due_date = st.date_input("Due date (optional)", value=None)
     submitted = st.form_submit_button("Add todo", type="primary", use_container_width=True)
 
 if submitted:
     try:
-        add_todo(DATA_FILE, title)
+        add_todo(DATA_FILE, title, due_date)
         st.rerun()
     except DuplicateTodoError:
         st.warning(f"“{title.strip()}” is already on your list.")
@@ -64,6 +65,8 @@ else:
                 st.markdown(f"~~{todo['title']}~~")
             else:
                 st.write(todo["title"])
+            if todo.get("due_date"):
+                st.caption(f"Due {todo['due_date']}")
         with delete_column:
             should_delete = st.button(
                 "🗑️",
