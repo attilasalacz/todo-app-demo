@@ -1,5 +1,6 @@
 """Streamlit user interface for the todo app."""
 
+import os
 from pathlib import Path
 
 import streamlit as st
@@ -15,7 +16,8 @@ from todo_store import (
     set_completed,
 )
 
-DATA_FILE = Path("data/todos.json")
+# Override with TODO_DATA_FILE, e.g. so tests never touch the real data file.
+DATA_FILE = Path(os.environ.get("TODO_DATA_FILE", "data/todos.json"))
 EMPTY_FILTER_MESSAGES = {
     "Active": "No active todos. Everything is done!",
     "Completed": "No completed todos yet.",
