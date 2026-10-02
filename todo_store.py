@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict
 from uuid import uuid4
 
 
@@ -15,6 +15,10 @@ class Todo(TypedDict):
     completed: bool
     created_at: str
     due_date: NotRequired[str | None]
+
+
+TodoFilter = Literal["All", "Active", "Completed"]
+TODO_FILTERS: tuple[TodoFilter, ...] = ("All", "Active", "Completed")
 
 
 class TodoStoreError(RuntimeError):
@@ -82,6 +86,17 @@ def delete_todo(path: Path, todo_id: str) -> bool:
         return False
     _save_todos(path, remaining)
     return True
+
+
+def filter_todos(todos: list[Todo], view: TodoFilter) -> list[Todo]:
+    """Return the todos visible in *view*, preserving their order."""
+    if view == "All":
+        return list(todos)
+    if view == "Active":
+        return [todo for todo in todos if not todo["completed"]]
+    if view == "Completed":
+        return [todo for todo in todos if todo["completed"]]
+    raise ValueError(f"Unknown todo filter: {view!r}.")
 
 
 def _title_key(title: str) -> str:

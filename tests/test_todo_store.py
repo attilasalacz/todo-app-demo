@@ -8,6 +8,7 @@ from todo_store import (
     TodoStoreError,
     add_todo,
     delete_todo,
+    filter_todos,
     load_todos,
     set_completed,
 )
@@ -152,3 +153,32 @@ def test_load_todos_rejects_invalid_due_date(tmp_path):
 
     with pytest.raises(TodoStoreError, match="invalid format"):
         load_todos(data_file)
+
+
+def _make_todo(todo_id: str, completed: bool):
+    return {
+        "id": todo_id,
+        "title": todo_id,
+        "completed": completed,
+        "created_at": "2025-01-01T00:00:00+00:00",
+    }
+
+
+@pytest.mark.parametrize(
+    ("view", "expected_ids"),
+    [("All", ["a", "b", "c"]), ("Active", ["a", "c"]), ("Completed", ["b"])],
+)
+def test_filter_todos_returns_matching_todos_in_order(view, expected_ids):
+    todos = [_make_todo("a", False), _make_todo("b", True), _make_todo("c", False)]
+
+    assert [todo["id"] for todo in filter_todos(todos, view)] == expected_ids
+
+
+@pytest.mark.parametrize("view", ["All", "Active", "Completed"])
+def test_filter_todos_handles_empty_list(view):
+    assert filter_todos([], view) == []
+
+
+def test_filter_todos_rejects_unknown_view():
+    with pytest.raises(ValueError, match="Unknown todo filter"):
+        filter_todos([], "Archived")

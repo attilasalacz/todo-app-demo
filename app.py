@@ -5,15 +5,21 @@ from pathlib import Path
 import streamlit as st
 
 from todo_store import (
+    TODO_FILTERS,
     DuplicateTodoError,
     TodoStoreError,
     add_todo,
     delete_todo,
+    filter_todos,
     load_todos,
     set_completed,
 )
 
 DATA_FILE = Path("data/todos.json")
+EMPTY_FILTER_MESSAGES = {
+    "Active": "No active todos. Everything is done!",
+    "Completed": "No completed todos yet.",
+}
 
 st.set_page_config(page_title="Todo App Demo", page_icon="✅", layout="centered")
 st.title("Todo App")
@@ -51,7 +57,12 @@ else:
     completed_count = sum(todo["completed"] for todo in todos)
     st.write(f"**{completed_count} of {len(todos)} completed**")
 
-    for todo in todos:
+    view = st.radio("Show", TODO_FILTERS, horizontal=True, key="todo-filter")
+    visible_todos = filter_todos(todos, view)
+    if not visible_todos:
+        st.info(EMPTY_FILTER_MESSAGES[view])
+
+    for todo in visible_todos:
         checkbox_column, title_column, delete_column = st.columns([1, 8, 1])
         with checkbox_column:
             completed = st.checkbox(
