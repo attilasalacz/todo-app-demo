@@ -63,26 +63,23 @@ else:
         st.info(EMPTY_FILTER_MESSAGES[view])
 
     for todo in visible_todos:
-        checkbox_column, title_column, delete_column = st.columns([1, 8, 1])
-        with checkbox_column:
+        title_column, delete_column = st.columns([3, 1], vertical_alignment="center")
+        with title_column:
+            # The visible label is the todo title, so it is also the checkbox's accessible name.
             completed = st.checkbox(
-                f"Complete {todo['title']}",
+                f"~~{todo['title']}~~" if todo["completed"] else todo["title"],
                 value=todo["completed"],
                 key=f"completed-{todo['id']}",
-                label_visibility="collapsed",
+                help=f"Mark {todo['title']} as {'active' if todo['completed'] else 'complete'}",
             )
-        with title_column:
-            if todo["completed"]:
-                st.markdown(f"~~{todo['title']}~~")
-            else:
-                st.write(todo["title"])
             if todo.get("due_date"):
                 st.caption(f"Due {todo['due_date']}")
         with delete_column:
             should_delete = st.button(
-                "🗑️",
+                f"Delete {todo['title']}",
                 key=f"delete-{todo['id']}",
-                help=f"Delete {todo['title']}",
+                icon=":material/delete:",
+                type="tertiary",
             )
 
         if completed != todo["completed"]:
